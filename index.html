@@ -227,6 +227,15 @@ const flags = {
   "Argentina":"🇦🇷","Egipto":"🇪🇬","Suiza":"🇨🇭","Colombia":"🇨🇴"
 };
 
+// nombre en inglés de cada selección, para poder buscarlas en Polymarket
+// sin importar en qué ronda aparezcan (octavos, cuartos, semis, final)
+const TEAM_EN = {
+  "Francia":"France", "Paraguay":"Paraguay", "Marruecos":"Morocco", "Canadá":"Canada",
+  "Brasil":"Brazil", "Noruega":"Norway", "México":"Mexico", "Inglaterra":"England",
+  "Portugal":"Portugal", "España":"Spain", "Estados Unidos":"United States", "Bélgica":"Belgium",
+  "Argentina":"Argentina", "Egipto":"Egypt", "Suiza":"Switzerland", "Colombia":"Colombia"
+};
+
 const octavosData = [
   {a:"Francia", b:"Paraguay", pa:1.0, stadium:"Gillette Stadium, Boston", fecha:"4 jul", played:true, score:"1–0", winner:"Francia"},
   {a:"Marruecos", b:"Canadá", pa:1.0, stadium:"— (jugado en 16avos previos)", fecha:"4 jul", played:true, score:"3–0", winner:"Marruecos"},
@@ -252,6 +261,11 @@ const semisShell = [
   {srcA:2, srcB:3, stadium:"Mercedes-Benz Stadium, Atlanta", fecha:"15 jul"}
 ];
 const finalShell = {stadium:"MetLife Stadium, Nueva Jersey", fecha:"19 jul"};
+
+// cuotas en vivo para cuartos de final que ya son partidos reales confirmados
+// (cuando ambos rivales de ese cruce ya están decididos en la vida real).
+// null = todavía no hay dato en vivo (usamos el modelo propio como estimación).
+let cuartosLiveData = [null, null, null, null];
 
 /* ============ STATE ============ */
 // winners[round] = array of team names (or null if undecided), aligned with shells
@@ -362,7 +376,7 @@ function renderOctavos(){
   });
 }
 
-function renderDerived(containerId, shell, winnersArr, sourceWinners, roundLabel){
+function renderDerived(containerId, shell, winnersArr, sourceWinners, roundLabel, liveDataArr){
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = '';
   shell.forEach((s, i)=>{
@@ -385,7 +399,11 @@ function renderDerived(containerId, shell, winnersArr, sourceWinners, roundLabel
       return;
     }
 
-    const p = matchupProb(teamA, teamB);
+    const live = liveDataArr ? liveDataArr[i] : null;
+    // el dato en vivo es válido solo si es justo para este mismo cruce de equipos
+    // (si el usuario simula/cambia manualmente un resultado, el cruce real puede ya no aplicar)
+    const liveValid = live && ((live.teamA === teamA && live.teamB === teamB) || (live.teamA === teamB && live.teamB === teamA));
+    const p = liveValid ? (live.teamA === teamA ? live.probA : 1 - live.probA) : matchupProb(teamA, teamB);
     const winner = winnersArr[i];
 
     const bar = document.createElement('div');
@@ -397,6 +415,26 @@ function renderDerived(containerId, shell, winnersArr, sourceWinners, roundLabel
     const rowB = teamRow(teamB, 1-p, winner===teamB, winner===teamA, false, ()=>pickDerived(roundLabel, i, teamB));
     card.appendChild(rowA);
     card.appendChild(rowB);
+
+    const tag = document.createElement('div');
+    tag.className = 'result-tag';
+    if(liveValid){
+      tag.style.color = '#6fe08a';
+      tag.textContent = 'Polymarket en vivo (cruce real confirmado)';
+    } else {
+      tag.style.color = 'var(--dim)';
+      tag.textContent = 'Modelo propio (cruce todavía hipotético o sin mercado)';
+    }
+    card.appendChild(tag);
+
+    if(liveValid && live.analysis){
+      const note = document.createElement('div');
+      note.style.cssText = 'margin-top:8px; padding-top:8px; border-top:1px dashed var(--dim2); font-size:11px; line-height:1.5; color:var(--dim); font-family:IBM Plex Mono, monospace;';
+      let text = live.analysis.trim();
+      if(text.length > 260) text = text.slice(0, 260).trim() + '…';
+      note.innerHTML = `<b style="color:var(--amber);">Contexto (Polymarket):</b> ${text}`;
+      card.appendChild(note);
+    }
 
     wrap.appendChild(card);
   });
@@ -444,7 +482,7 @@ function renderFinal(){
 
 function renderAll(){
   renderOctavos();
-  renderDerived('round-cuartos', cuartosShell, state.cuartos, state.octavos, 'Cuartos');
+  renderDerived('round-cuartos', cuartosShell, state.cuartos, state.octavos, 'Cuartos', cuartosLiveData);
   renderDerived('round-semis', semisShell, state.semis, state.cuartos, 'Semifinal');
   renderFinal();
 }
@@ -654,7 +692,27 @@ async function fetchLiveOdds(){
     }
   }
 
-  if(matched === 0 && batchFailed){
+  // cuartos de final que ya son cruces reales confirmados (ambos octavos ya jugados
+  // de verdad, no hipotéticos): probamos traer su cuota real de Polymarket también
+  let cuartosMatched = 0;
+  for(let qi = 0; qi < cuartosShell.length; qi++){
+    const s = cuartosShell[qi];
+    const srcA = octavosData[s.srcA], srcB = octavosData[s.srcB];
+    if(!srcA.played || !srcB.played) continue; // todavía no es un cruce real
+    const teamA = srcA.winner, teamB = srcB.winner;
+    const enA = TEAM_EN[teamA], enB = TEAM_EN[teamB];
+    if(!enA || !enB) continue;
+    let result = findMarketForMatchup(events, enA, enB);
+    if(!result){
+      result = await searchFallback(enA, enB);
+    }
+    if(result){
+      cuartosLiveData[qi] = { probA: result.probA, analysis: result.analysis, teamA, teamB };
+      cuartosMatched++;
+    }
+  }
+
+  if(matched === 0 && cuartosMatched === 0 && batchFailed){
     statusEl.textContent = '⚠️ Polymarket sigue sin responder ni directo ni por los proxies puente. Se mantienen las estimaciones propias.';
     renderAll();
     return;
@@ -663,8 +721,11 @@ async function fetchLiveOdds(){
   // recompute strength model with any live-updated probabilities
   octavosData.forEach(m=>{ strength[m.a] = m.pa; strength[m.b] = 1 - m.pa; });
 
-  if(matched > 0){
-    statusEl.textContent = `✅ ${matched}/6 partidos actualizados con cuotas reales de Polymarket (${new Date().toLocaleTimeString('es-AR')}). El resto sigue en estimación propia.`;
+  if(matched > 0 || cuartosMatched > 0){
+    const parts = [];
+    if(matched > 0) parts.push(`${matched}/6 octavos`);
+    if(cuartosMatched > 0) parts.push(`${cuartosMatched} cuartos`);
+    statusEl.textContent = `✅ ${parts.join(' y ')} actualizados con cuotas reales de Polymarket (${new Date().toLocaleTimeString('es-AR')}). El resto sigue en estimación propia.`;
   } else {
     statusEl.textContent = 'ℹ️ Polymarket respondió pero no encontró mercados para estos cruces todavía. Se mantienen las estimaciones propias.';
   }
