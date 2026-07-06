@@ -330,6 +330,13 @@ function renderOctavos(){
       tag.className = 'result-tag';
       tag.textContent = `Jugado — ${m.a} ${m.score} ${m.b}`;
       card.appendChild(tag);
+    } else if(m.autoResolved){
+      const tag = document.createElement('div');
+      tag.className = 'result-tag';
+      tag.style.color = '#6fe08a';
+      const winner = m.pa >= 0.97 ? m.a : m.b;
+      tag.textContent = `🏁 Definido en el mercado — avanza ${winner} (Polymarket)`;
+      card.appendChild(tag);
     } else {
       const tag = document.createElement('div');
       tag.className = 'result-tag';
@@ -341,6 +348,15 @@ function renderOctavos(){
         tag.textContent = 'Estimación propia (sin dato de mercado)';
       }
       card.appendChild(tag);
+    }
+
+    if(m.analysis){
+      const note = document.createElement('div');
+      note.style.cssText = 'margin-top:8px; padding-top:8px; border-top:1px dashed var(--dim2); font-size:11px; line-height:1.5; color:var(--dim); font-family:IBM Plex Mono, monospace;';
+      let text = m.analysis.trim();
+      if(text.length > 260) text = text.slice(0, 260).trim() + '…';
+      note.innerHTML = `<b style="color:var(--amber);">Contexto (Polymarket):</b> ${text}`;
+      card.appendChild(note);
     }
     wrap.appendChild(card);
   });
@@ -488,7 +504,11 @@ function simulateAll(){
 }
 
 function resetAll(){
-  state.octavos = octavosData.map(m => m.played ? m.a : null);
+  state.octavos = octavosData.map(m => {
+    if(m.played) return m.a;
+    if(m.autoResolved) return m.pa >= 0.97 ? m.a : m.b;
+    return null;
+  });
   state.cuartos = [null,null,null,null];
   state.semis = [null,null];
   state.final = null;
@@ -569,7 +589,11 @@ function findMarketForMatchup(events, enA, enB){
       const total = priceA + priceB;
       if(total > 0){
         // normalizamos repartiendo la probabilidad de empate proporcionalmente
-        return { probA: priceA / total, probB: priceB / total };
+        return {
+          probA: priceA / total,
+          probB: priceB / total,
+          analysis: ev.eventMetadata?.context_description || null
+        };
       }
     }
   }
@@ -601,7 +625,8 @@ async function fetchLiveOdds(){
   }
 
   let matched = 0;
-  for(const m of octavosData){
+  for(let i = 0; i < octavosData.length; i++){
+    const m = octavosData[i];
     if(m.played || !m.en) continue;
     let result = findMarketForMatchup(events, m.en[0], m.en[1]);
     if(!result){
@@ -610,9 +635,22 @@ async function fetchLiveOdds(){
     if(result){
       m.pa = result.probA;
       m.source = 'live';
+      m.analysis = result.analysis;
       matched++;
+      // si el mercado ya está prácticamente decidido, lo tratamos como resuelto
+      // y pre-seleccionamos el ganador (el usuario puede tocar el otro equipo para corregir)
+      if(m.pa >= 0.97 || m.pa <= 0.03){
+        m.autoResolved = true;
+        const winner = m.pa >= 0.97 ? m.a : m.b;
+        if(state.octavos[i] === null){
+          state.octavos[i] = winner;
+        }
+      } else {
+        m.autoResolved = false;
+      }
     } else {
       m.source = 'estimado';
+      m.autoResolved = false;
     }
   }
 
