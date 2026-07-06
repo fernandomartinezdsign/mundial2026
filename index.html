@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mundial 2026 — Cuadro de Eliminación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pitch:#0b3d2e;
+  --pitch-deep:#082b21;
+  --night:#0a1a2f;
+  --chalk:#f2f0e6;
+  --amber:#ffb020;
+  --line:#1f6b4c;
+  --red-card:#d64545;
+  --dim:rgba(242,240,230,0.55);
+  --dim2:rgba(242,240,230,0.32);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(circle at 15% 0%, rgba(255,176,32,0.08), transparent 45%),
+    radial-gradient(circle at 85% 100%, rgba(31,107,76,0.25), transparent 50%),
+    var(--night);
+  color:var(--chalk);
+  font-family:'IBM Plex Sans', sans-serif;
+  min-height:100vh;
+  padding:32px 16px 80px;
+}
+.wrap{max-width:1240px;margin:0 auto;}
+
+/* ---------- HEADER ---------- */
+header{
+  display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end;
+  gap:16px; margin-bottom:8px; border-bottom:2px solid var(--line); padding-bottom:18px;
+}
+.eyebrow{
+  font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.18em;
+  text-transform:uppercase; color:var(--amber); margin:0 0 6px;
+}
+h1{
+  font-family:'Teko', sans-serif; font-weight:600; font-size:56px; line-height:0.95;
+  margin:0; letter-spacing:0.01em; text-transform:uppercase;
+}
+h1 span{color:var(--amber);}
+.subtitle{color:var(--dim); font-size:14px; max-width:520px; margin-top:6px;}
+.clock{
+  font-family:'IBM Plex Mono', monospace; text-align:right; font-size:12px; color:var(--dim);
+}
+.clock b{display:block; font-size:20px; color:var(--chalk); font-family:'Teko',sans-serif; letter-spacing:0.03em;}
+
+.disclaimer{
+  font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--dim2);
+  border:1px dashed var(--dim2); padding:10px 14px; border-radius:4px; margin:18px 0 30px;
+  line-height:1.5;
+}
+.disclaimer b{color:var(--amber);}
+
+/* ---------- CONTROLS ---------- */
+.controls{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:34px;}
+button.ctl{
+  font-family:'IBM Plex Mono', monospace; font-size:12px; text-transform:uppercase;
+  letter-spacing:0.08em; background:transparent; border:1px solid var(--line);
+  color:var(--chalk); padding:11px 18px; border-radius:3px; cursor:pointer;
+  transition:all .15s ease;
+}
+button.ctl:hover{background:var(--line); border-color:var(--line);}
+button.ctl.primary{background:var(--amber); border-color:var(--amber); color:var(--pitch-deep); font-weight:600;}
+button.ctl.primary:hover{filter:brightness(1.08);}
+
+/* ---------- ROUND LABELS ---------- */
+.round-title{
+  font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.15em;
+  text-transform:uppercase; color:var(--amber); margin:0 0 14px; display:flex; align-items:center; gap:10px;
+}
+.round-title::after{content:''; flex:1; height:1px; background:var(--line);}
+.round-count{color:var(--dim); font-weight:400;}
+
+section.round{margin-bottom:46px;}
+.matches-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:14px;}
+.matches-grid.two{grid-template-columns:repeat(auto-fit,minmax(270px,1fr));}
+.matches-grid.final{grid-template-columns:minmax(270px,420px); justify-content:center;}
+
+/* ---------- MATCH CARD ---------- */
+.match{
+  background:linear-gradient(180deg, rgba(31,107,76,0.14), rgba(11,61,46,0.35));
+  border:1px solid var(--line); border-radius:6px; padding:14px 14px 12px; position:relative;
+  overflow:hidden;
+}
+.match.locked{opacity:0.55;}
+.match.pending-parent{opacity:0.35;}
+.match-meta{
+  display:flex; justify-content:space-between; font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px; color:var(--dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:10px;
+}
+.match-meta .stadium{color:var(--dim);}
+.team{
+  display:grid; grid-template-columns:26px 1fr auto auto; align-items:center; gap:10px;
+  padding:9px 8px; border-radius:4px; cursor:pointer; border:1px solid transparent;
+  background:rgba(242,240,230,0.03); margin-bottom:6px; transition:all .12s ease;
+}
+.team:last-of-type{margin-bottom:0;}
+.team:hover{background:rgba(255,176,32,0.1); border-color:rgba(255,176,32,0.4);}
+.team.winner{background:rgba(255,176,32,0.16); border-color:var(--amber);}
+.team.loser{opacity:0.4;}
+.team.disabled{cursor:default;}
+.team.disabled:hover{background:rgba(242,240,230,0.03); border-color:transparent;}
+.flag{font-size:20px; text-align:center; line-height:1;}
+.tname{font-weight:500; font-size:15px;}
+.tname small{display:block; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--dim); font-weight:400; letter-spacing:0.04em;}
+.prob{
+  font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--chalk); min-width:38px; text-align:right;
+}
+.odds{
+  font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--amber); min-width:36px; text-align:right;
+  border-left:1px solid var(--line); padding-left:8px;
+}
+.probbar{height:3px; background:var(--dim2); border-radius:2px; margin:0 0 10px; overflow:hidden; display:flex;}
+.probbar i{display:block; height:100%; background:var(--amber);}
+.probbar i.b{background:var(--line);}
+.vs-tag{
+  position:absolute; top:14px; right:14px; font-family:'Teko',sans-serif; font-size:13px;
+  color:var(--dim2); letter-spacing:0.05em;
+}
+.result-tag{
+  font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; color:var(--amber);
+  letter-spacing:0.08em; margin-top:8px; display:flex; align-items:center; gap:6px;
+}
+.result-tag::before{content:'●'; font-size:8px;}
+.empty-slot{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim2); text-align:center;
+  padding:18px 0; border:1px dashed var(--dim2); border-radius:4px;
+}
+
+/* champion banner */
+.champion{
+  margin-top:10px; text-align:center; padding:40px 20px; border-radius:8px;
+  background:radial-gradient(circle at 50% -20%, rgba(255,176,32,0.25), transparent 60%), rgba(255,176,32,0.06);
+  border:1px solid var(--amber); display:none;
+}
+.champion.show{display:block;}
+.champion .eyebrow{justify-content:center;}
+.champion .flag{font-size:64px; display:block; margin-bottom:6px;}
+.champion h2{font-family:'Teko',sans-serif; font-size:64px; margin:0; text-transform:uppercase; letter-spacing:0.02em;}
+.champion p{color:var(--dim); font-family:'IBM Plex Mono',monospace; font-size:12px; margin-top:8px;}
+
+footer{
+  text-align:center; margin-top:50px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--dim2);
+}
+
+@media (max-width:600px){
+  h1{font-size:40px;}
+  .clock{text-align:left;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">Copa Mundial FIFA · EE.UU · México · Canadá</p>
+      <h1>Cuadro de <span>eliminación</span></h1>
+      <p class="subtitle">Octavos de final en juego. Elegí ganadores partido a partido, o simulá el resto del torneo con las probabilidades cargadas.</p>
+    </div>
+    <div class="clock">
+      05 JUL 2026<b id="liveClock">--:--:--</b>
+      Octavos: 4–7 jul · Final: 19 jul, MetLife
+    </div>
+  </header>
+
+  <div class="disclaimer">
+    <b>Cómo funciona:</b> al abrir el archivo, intenta traer en vivo las probabilidades reales de Polymarket. Como el dominio de Polymarket puede estar bloqueado por tu ISP (bloqueo típico de casas de apuestas en Argentina), primero prueba directo y si falla usa un <b>proxy puente público</b> (otro dominio que hace el pedido por vos). Si todo eso falla, o Polymarket no tiene mercado abierto para algún cruce, ese partido queda con una <b>estimación propia</b> (marcada en cada tarjeta). Cuartos, semis y final todavía no tienen mercado real porque los rivales no están confirmados: esos usan un modelo simple derivado de las probabilidades de octavos. Los dos resultados ya jugados (Francia y Marruecos) son reales al 5 de julio.
+  </div>
+
+  <div class="controls">
+    <button class="ctl" id="refreshOdds">🔄 Traer cuotas en vivo de Polymarket</button>
+    <button class="ctl primary" id="simAll">🎲 Simular torneo completo</button>
+    <button class="ctl" id="reset">↺ Reiniciar cuadro</button>
+    <span id="oddsStatus" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);align-self:center;"></span>
+  </div>
+
+  <!-- OCTAVOS -->
+  <section class="round">
+    <p class="round-title">Octavos de final <span class="round-count">— 8 partidos</span></p>
+    <div class="matches-grid" id="round-octavos"></div>
+  </section>
+
+  <!-- CUARTOS -->
+  <section class="round">
+    <p class="round-title">Cuartos de final <span class="round-count">— 4 partidos</span></p>
+    <div class="matches-grid" id="round-cuartos"></div>
+  </section>
+
+  <!-- SEMIS -->
+  <section class="round">
+    <p class="round-title">Semifinales <span class="round-count">— 2 partidos</span></p>
+    <div class="matches-grid two" id="round-semis"></div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="round">
+    <p class="round-title">Final <span class="round-count">— MetLife Stadium, 19 jul</span></p>
+    <div class="matches-grid final" id="round-final"></div>
+  </section>
+
+  <div class="champion" id="championBox">
+    <p class="eyebrow">🏆 Campeón del Mundo 2026</p>
+    <span class="flag" id="champFlag"></span>
+    <h2 id="champName"></h2>
+    <p>Levanta la copa en el MetLife Stadium, Nueva Jersey</p>
+  </div>
+
+  <footer>Cuadro interactivo · datos de octavos al 05/07/2026 vía cobertura de prensa · hecho para jugar, no para timbear en serio 😉</footer>
+</div>
+
+<script>
+/* ============ DATA MODEL ============ */
+// Each octavos match: [teamA, teamB, probA (0-1), stadium, fecha, played, scoreIfPlayed]
+const flags = {
+  "Francia":"🇫🇷","Paraguay":"🇵🇾","Marruecos":"🇲🇦","Canadá":"🇨🇦",
+  "Brasil":"🇧🇷","Noruega":"🇳🇴","México":"🇲🇽","Inglaterra":"🏴",
+  "Portugal":"🇵🇹","España":"🇪🇸","Estados Unidos":"🇺🇸","Bélgica":"🇧🇪",
+  "Argentina":"🇦🇷","Egipto":"🇪🇬","Suiza":"🇨🇭","Colombia":"🇨🇴"
+};
+
+const octavosData = [
+  {a:"Francia", b:"Paraguay", pa:1.0, stadium:"Gillette Stadium, Boston", fecha:"4 jul", played:true, score:"1–0"},
+  {a:"Marruecos", b:"Canadá", pa:1.0, stadium:"— (jugado en 16avos previos)", fecha:"4 jul", played:true, score:"3–0"},
+  {a:"Brasil", b:"Noruega", pa:0.68, stadium:"MetLife Stadium, Nueva Jersey", fecha:"5 jul", en:["Brazil","Norway"]},
+  {a:"México", b:"Inglaterra", pa:0.32, stadium:"Estadio Azteca, CDMX", fecha:"5 jul", en:["Mexico","England"]},
+  {a:"Portugal", b:"España", pa:0.42, stadium:"AT&T Stadium, Dallas", fecha:"6 jul", en:["Portugal","Spain"]},
+  {a:"Estados Unidos", b:"Bélgica", pa:0.38, stadium:"Lumen Field, Seattle", fecha:"6 jul", en:["United States","Belgium"]},
+  {a:"Argentina", b:"Egipto", pa:0.82, stadium:"Mercedes-Benz Stadium, Atlanta", fecha:"7 jul", en:["Argentina","Egypt"]},
+  {a:"Suiza", b:"Colombia", pa:0.45, stadium:"BC Place, Vancouver", fecha:"7 jul", en:["Switzerland","Colombia"]}
+];
+// source tag per octavos match: 'played' | 'estimado' | 'live'
+octavosData.forEach(m=>{ m.source = m.played ? 'played' : 'estimado'; });
+
+// Quarterfinal shell: which octavos feed which cuarto, + stadium/fecha
+const cuartosShell = [
+  {srcA:0, srcB:1, stadium:"Gillette Stadium, Boston", fecha:"9 jul"},
+  {srcA:4, srcB:5, stadium:"SoFi Stadium, Los Ángeles", fecha:"10 jul"},
+  {srcA:2, srcB:3, stadium:"Hard Rock Stadium, Miami", fecha:"11 jul"},
+  {srcA:6, srcB:7, stadium:"Arrowhead Stadium, Kansas City", fecha:"11 jul"}
+];
+const semisShell = [
+  {srcA:0, srcB:1, stadium:"AT&T Stadium, Dallas", fecha:"14 jul"},
+  {srcA:2, srcB:3, stadium:"Mercedes-Benz Stadium, Atlanta", fecha:"15 jul"}
+];
+const finalShell = {stadium:"MetLife Stadium, Nueva Jersey", fecha:"19 jul"};
+
+/* ============ STATE ============ */
+// winners[round] = array of team names (or null if undecided), aligned with shells
+let state = {
+  octavos: octavosData.map(m => m.played ? m.a : null), // winners of octavos
+  cuartos: [null,null,null,null],
+  semis: [null,null],
+  final: null
+};
+
+/* ============ HELPERS ============ */
+function pct(p){ return Math.round(p*100) + "%"; }
+function decOdds(p){ if(p<=0) return "—"; return (1/p).toFixed(2); }
+function flag(name){ return flags[name] || "🏳️"; }
+
+// Estimate probability for a derived match based on simple strength heuristic
+// We derive strength scores from octavos pa (implied), then combine for later rounds.
+const strength = {};
+(function seedStrength(){
+  octavosData.forEach(m=>{
+    strength[m.a] = m.pa;
+    strength[m.b] = 1 - m.pa;
+  });
+})();
+function matchupProb(t1, t2){
+  if(!t1 || !t2) return 0.5;
+  const s1 = strength[t1] ?? 0.5, s2 = strength[t2] ?? 0.5;
+  const total = s1 + s2;
+  if(total === 0) return 0.5;
+  // soften toward 0.5 a bit so it's not too extreme in later rounds
+  const raw = s1/total;
+  return 0.5 + (raw-0.5)*0.85;
+}
+
+/* ============ RENDER ============ */
+function teamRow(name, prob, isWinner, isLoser, disabled, onClick){
+  const div = document.createElement('div');
+  div.className = 'team' + (isWinner?' winner':'') + (isLoser?' loser':'') + (disabled?' disabled':'');
+  div.innerHTML = `
+    <span class="flag">${flag(name)}</span>
+    <span class="tname">${name}</span>
+    <span class="prob">${prob!==null?pct(prob):'—'}</span>
+    <span class="odds">${prob!==null?decOdds(prob):'—'}</span>
+  `;
+  if(!disabled) div.addEventListener('click', onClick);
+  return div;
+}
+
+function renderOctavos(){
+  const wrap = document.getElementById('round-octavos');
+  wrap.innerHTML = '';
+  octavosData.forEach((m, i)=>{
+    const card = document.createElement('div');
+    card.className = 'match';
+    const winner = state.octavos[i];
+    const probA = m.played ? (m.a===winner?1:0) : m.pa;
+    const probB = m.played ? (m.b===winner?1:0) : 1-m.pa;
+
+    const meta = document.createElement('div');
+    meta.className = 'match-meta';
+    meta.innerHTML = `<span>Octavos ${i+1}</span><span class="stadium">${m.fecha} · ${m.stadium}</span>`;
+    card.appendChild(meta);
+
+    const bar = document.createElement('div');
+    bar.className = 'probbar';
+    bar.innerHTML = `<i style="width:${probA*100}%"></i><i class="b" style="width:${probB*100}%"></i>`;
+    card.appendChild(bar);
+
+    const rowA = teamRow(m.a, probA, winner===m.a, winner===m.b, m.played, ()=>pickOctavos(i, m.a));
+    const rowB = teamRow(m.b, probB, winner===m.b, winner===m.a, m.played, ()=>pickOctavos(i, m.b));
+    card.appendChild(rowA);
+    card.appendChild(rowB);
+
+    if(m.played){
+      const tag = document.createElement('div');
+      tag.className = 'result-tag';
+      tag.textContent = `Jugado — ${m.a} ${m.score} ${m.b}`;
+      card.appendChild(tag);
+    } else {
+      const tag = document.createElement('div');
+      tag.className = 'result-tag';
+      if(m.source === 'live'){
+        tag.style.color = '#6fe08a';
+        tag.textContent = 'Polymarket en vivo';
+      } else {
+        tag.style.color = 'var(--dim)';
+        tag.textContent = 'Estimación propia (sin dato de mercado)';
+      }
+      card.appendChild(tag);
+    }
+    wrap.appendChild(card);
+  });
+}
+
+function renderDerived(containerId, shell, winnersArr, sourceWinners, roundLabel){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '';
+  shell.forEach((s, i)=>{
+    const teamA = sourceWinners[s.srcA];
+    const teamB = sourceWinners[s.srcB];
+    const card = document.createElement('div');
+    card.className = 'match' + ((!teamA || !teamB) ? ' pending-parent' : '');
+
+    const meta = document.createElement('div');
+    meta.className = 'match-meta';
+    meta.innerHTML = `<span>${roundLabel} ${i+1}</span><span class="stadium">${s.fecha} · ${s.stadium}</span>`;
+    card.appendChild(meta);
+
+    if(!teamA || !teamB){
+      const slot = document.createElement('div');
+      slot.className = 'empty-slot';
+      slot.textContent = 'Esperando clasificados…';
+      card.appendChild(slot);
+      wrap.appendChild(card);
+      return;
+    }
+
+    const p = matchupProb(teamA, teamB);
+    const winner = winnersArr[i];
+
+    const bar = document.createElement('div');
+    bar.className = 'probbar';
+    bar.innerHTML = `<i style="width:${p*100}%"></i><i class="b" style="width:${(1-p)*100}%"></i>`;
+    card.appendChild(bar);
+
+    const rowA = teamRow(teamA, p, winner===teamA, winner===teamB, false, ()=>pickDerived(roundLabel, i, teamA));
+    const rowB = teamRow(teamB, 1-p, winner===teamB, winner===teamA, false, ()=>pickDerived(roundLabel, i, teamB));
+    card.appendChild(rowA);
+    card.appendChild(rowB);
+
+    wrap.appendChild(card);
+  });
+}
+
+function renderFinal(){
+  const wrap = document.getElementById('round-final');
+  wrap.innerHTML = '';
+  const teamA = state.semis[0];
+  const teamB = state.semis[1];
+  const card = document.createElement('div');
+  card.className = 'match' + ((!teamA || !teamB) ? ' pending-parent' : '');
+
+  const meta = document.createElement('div');
+  meta.className = 'match-meta';
+  meta.innerHTML = `<span>Gran Final</span><span class="stadium">${finalShell.fecha} · ${finalShell.stadium}</span>`;
+  card.appendChild(meta);
+
+  if(!teamA || !teamB){
+    const slot = document.createElement('div');
+    slot.className = 'empty-slot';
+    slot.textContent = 'Esperando semifinalistas…';
+    card.appendChild(slot);
+  } else {
+    const p = matchupProb(teamA, teamB);
+    const winner = state.final;
+    const bar = document.createElement('div');
+    bar.className = 'probbar';
+    bar.innerHTML = `<i style="width:${p*100}%"></i><i class="b" style="width:${(1-p)*100}%"></i>`;
+    card.appendChild(bar);
+    card.appendChild(teamRow(teamA, p, winner===teamA, winner===teamB, false, ()=>pickFinal(teamA)));
+    card.appendChild(teamRow(teamB, 1-p, winner===teamB, winner===teamA, false, ()=>pickFinal(teamB)));
+  }
+  wrap.appendChild(card);
+
+  const champBox = document.getElementById('championBox');
+  if(state.final){
+    champBox.classList.add('show');
+    document.getElementById('champFlag').textContent = flag(state.final);
+    document.getElementById('champName').textContent = state.final;
+  } else {
+    champBox.classList.remove('show');
+  }
+}
+
+function renderAll(){
+  renderOctavos();
+  renderDerived('round-cuartos', cuartosShell, state.cuartos, state.octavos, 'Cuartos');
+  renderDerived('round-semis', semisShell, state.semis, state.cuartos, 'Semifinal');
+  renderFinal();
+}
+
+/* ============ ACTIONS ============ */
+function clearFrom(round){
+  if(round==='octavos'){ state.cuartos=[null,null,null,null]; state.semis=[null,null]; state.final=null; }
+  if(round==='cuartos'){ state.semis=[null,null]; state.final=null; }
+  if(round==='semis'){ state.final=null; }
+}
+
+function pickOctavos(i, team){
+  if(octavosData[i].played) return;
+  state.octavos[i] = team;
+  clearFrom('octavos');
+  renderAll();
+}
+function pickDerived(roundLabel, i, team){
+  if(roundLabel==='Cuartos'){ state.cuartos[i]=team; clearFrom('cuartos'); }
+  if(roundLabel==='Semifinal'){ state.semis[i]=team; clearFrom('semis'); }
+  renderAll();
+}
+function pickFinal(team){
+  state.final = team;
+  renderAll();
+}
+
+function weightedPick(teamA, teamB, probA){
+  return Math.random() < probA ? teamA : teamB;
+}
+
+function simulateAll(){
+  // octavos
+  octavosData.forEach((m,i)=>{
+    if(!m.played){
+      state.octavos[i] = weightedPick(m.a, m.b, m.pa);
+    }
+  });
+  // cuartos
+  cuartosShell.forEach((s,i)=>{
+    const a = state.octavos[s.srcA], b = state.octavos[s.srcB];
+    const p = matchupProb(a,b);
+    state.cuartos[i] = weightedPick(a,b,p);
+  });
+  // semis
+  semisShell.forEach((s,i)=>{
+    const a = state.cuartos[s.srcA], b = state.cuartos[s.srcB];
+    const p = matchupProb(a,b);
+    state.semis[i] = weightedPick(a,b,p);
+  });
+  // final
+  const p = matchupProb(state.semis[0], state.semis[1]);
+  state.final = weightedPick(state.semis[0], state.semis[1], p);
+  renderAll();
+
+  document.getElementById('championBox').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function resetAll(){
+  state.octavos = octavosData.map(m => m.played ? m.a : null);
+  state.cuartos = [null,null,null,null];
+  state.semis = [null,null];
+  state.final = null;
+  renderAll();
+}
+
+document.getElementById('simAll').addEventListener('click', simulateAll);
+document.getElementById('reset').addEventListener('click', resetAll);
+
+/* ============ POLYMARKET LIVE ODDS ============ */
+function norm(s){
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+
+// El dominio polymarket.com puede estar bloqueado por el ISP (bloqueo DNS típico
+// de casas de apuestas en Argentina). Probamos: 1) directo, 2) por un proxy público
+// (otro dominio, no bloqueado, que hace el pedido por nosotros y devuelve el JSON).
+const PROXIES = [
+  (url) => url, // directo, sin proxy
+  (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+];
+
+async function fetchViaProxies(url){
+  let lastErr;
+  for(const buildUrl of PROXIES){
+    try{
+      const res = await fetch(buildUrl(url));
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      return await res.json();
+    } catch(err){
+      lastErr = err;
+      continue; // probar siguiente proxy
+    }
+  }
+  throw lastErr || new Error("Todos los proxies fallaron");
+}
+
+async function fetchWorldCupEvents(){
+  const url = "https://gamma-api.polymarket.com/events?tag_id=102232&closed=false&limit=500";
+  const data = await fetchViaProxies(url);
+  return Array.isArray(data) ? data : (data.events || data.data || []);
+}
+
+function findMarketForMatchup(events, enA, enB){
+  const a = norm(enA), b = norm(enB);
+  for(const ev of events){
+    const title = norm(ev.title || ev.question || ev.slug || "");
+    if(title.includes(a) && title.includes(b)){
+      const markets = ev.markets || [];
+      for(const mkt of markets){
+        let outcomes, prices;
+        try{
+          outcomes = typeof mkt.outcomes === 'string' ? JSON.parse(mkt.outcomes) : mkt.outcomes;
+          prices = typeof mkt.outcomePrices === 'string' ? JSON.parse(mkt.outcomePrices) : mkt.outcomePrices;
+        } catch(e){ continue; }
+        if(!outcomes || !prices || outcomes.length < 2) continue;
+        const idxA = outcomes.findIndex(o => norm(o).includes(a));
+        const idxB = outcomes.findIndex(o => norm(o).includes(b));
+        if(idxA >= 0 && idxB >= 0){
+          return { probA: parseFloat(prices[idxA]), probB: parseFloat(prices[idxB]) };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+async function searchFallback(enA, enB){
+  try{
+    const url = `https://gamma-api.polymarket.com/public-search?q=${encodeURIComponent(enA + " " + enB)}`;
+    const data = await fetchViaProxies(url);
+    const events = data.events || data.data || [];
+    return findMarketForMatchup(events, enA, enB);
+  } catch(e){
+    return null;
+  }
+}
+
+async function fetchLiveOdds(){
+  const statusEl = document.getElementById('oddsStatus');
+  statusEl.textContent = 'Consultando Polymarket…';
+  let events = [];
+  let batchFailed = false;
+  try{
+    events = await fetchWorldCupEvents();
+  } catch(err){
+    batchFailed = true;
+  }
+
+  let matched = 0;
+  for(const m of octavosData){
+    if(m.played || !m.en) continue;
+    let result = findMarketForMatchup(events, m.en[0], m.en[1]);
+    if(!result){
+      result = await searchFallback(m.en[0], m.en[1]);
+    }
+    if(result){
+      m.pa = result.probA;
+      m.source = 'live';
+      matched++;
+    } else {
+      m.source = 'estimado';
+    }
+  }
+
+  if(matched === 0 && batchFailed){
+    statusEl.textContent = '⚠️ Polymarket sigue sin responder ni directo ni por los proxies puente. Se mantienen las estimaciones propias.';
+    renderAll();
+    return;
+  }
+
+  // recompute strength model with any live-updated probabilities
+  octavosData.forEach(m=>{ strength[m.a] = m.pa; strength[m.b] = 1 - m.pa; });
+
+  if(matched > 0){
+    statusEl.textContent = `✅ ${matched}/6 partidos actualizados con cuotas reales de Polymarket (${new Date().toLocaleTimeString('es-AR')}). El resto sigue en estimación propia.`;
+  } else {
+    statusEl.textContent = 'ℹ️ Polymarket respondió pero no encontró mercados para estos cruces todavía. Se mantienen las estimaciones propias.';
+  }
+  renderAll();
+}
+
+document.getElementById('refreshOdds').addEventListener('click', fetchLiveOdds);
+// intento automático al abrir el archivo
+fetchLiveOdds();
+
+/* live-ish clock just for scoreboard flavor */
+function tickClock(){
+  const now = new Date();
+  document.getElementById('liveClock').textContent = now.toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+tickClock();
+setInterval(tickClock, 1000);
+
+renderAll();
+</script>
+</body>
+</html>
