@@ -30,7 +30,55 @@ body{
   min-height:100vh;
   padding:32px 16px 80px;
 }
-.wrap{max-width:1240px;margin:0 auto;}
+.wrap{max-width:1440px;margin:0 auto;}
+.layout{display:flex; gap:24px; align-items:flex-start;}
+.main-col{flex:1; min-width:0;}
+.sidebar{
+  width:300px; flex-shrink:0; position:sticky; top:20px;
+  background:linear-gradient(180deg, rgba(31,107,76,0.1), rgba(11,61,46,0.25));
+  border:1px solid var(--line); border-radius:6px; padding:16px;
+  max-height:calc(100vh - 40px); overflow-y:auto;
+}
+.sidebar-note{font-size:11px; color:var(--dim); line-height:1.5; margin:0 0 14px;}
+.sidebar-loading{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim2);}
+.extra-match{
+  border:1px solid var(--line); border-radius:4px; padding:10px 12px; margin-bottom:10px;
+  background:rgba(242,240,230,0.03);
+}
+.extra-match:last-child{margin-bottom:0;}
+.extra-match .em-title{
+  font-family:'Teko',sans-serif; font-size:19px; letter-spacing:0.01em; margin:0 0 8px; color:var(--chalk);
+}
+.extra-stat{display:flex; justify-content:space-between; align-items:center; font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:4px 0;}
+.extra-stat .es-label{color:var(--dim);}
+.extra-stat .es-val{color:var(--amber); font-weight:600;}
+.extra-stat.none .es-val{color:var(--dim2); font-weight:400;}
+
+@media (max-width:900px){
+  .layout{flex-direction:column;}
+  .sidebar{width:100%; position:static; max-height:none;}
+}
+
+.analyze-btn{
+  display:flex; align-items:center; justify-content:center; gap:6px; width:100%;
+  margin-top:8px; background:transparent; border:1px solid var(--amber); color:var(--amber);
+  font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase;
+  letter-spacing:0.06em; padding:7px 10px; border-radius:3px; cursor:pointer;
+}
+.analyze-btn:hover{background:rgba(255,176,32,0.12);}
+.detail-header{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:4px;}
+.detail-header .flag{font-size:26px;}
+.detail-vs{font-family:'Teko',sans-serif; font-size:21px; text-align:center;}
+.detail-context{
+  font-size:11.5px; line-height:1.6; color:var(--dim); font-family:'IBM Plex Mono',monospace;
+  margin-top:12px; padding-top:12px; border-top:1px dashed var(--dim2);
+}
+.detail-link{
+  display:block; margin-top:14px; font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--amber); text-decoration:none; text-align:center; border:1px solid var(--line);
+  padding:8px; border-radius:3px;
+}
+.detail-link:hover{background:rgba(255,176,32,0.08);}
 
 /* ---------- HEADER ---------- */
 header{
@@ -183,35 +231,46 @@ footer{
     <span id="oddsStatus" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);align-self:center;"></span>
   </div>
 
-  <!-- OCTAVOS -->
-  <section class="round">
-    <p class="round-title">Octavos de final <span class="round-count">— 8 partidos</span></p>
-    <div class="matches-grid" id="round-octavos"></div>
-  </section>
+  <div class="layout">
+    <div class="main-col">
+      <!-- OCTAVOS -->
+      <section class="round">
+        <p class="round-title">Octavos de final <span class="round-count">— 8 partidos</span></p>
+        <div class="matches-grid" id="round-octavos"></div>
+      </section>
 
-  <!-- CUARTOS -->
-  <section class="round">
-    <p class="round-title">Cuartos de final <span class="round-count">— 4 partidos</span></p>
-    <div class="matches-grid" id="round-cuartos"></div>
-  </section>
+      <!-- CUARTOS -->
+      <section class="round">
+        <p class="round-title">Cuartos de final <span class="round-count">— 4 partidos</span></p>
+        <div class="matches-grid" id="round-cuartos"></div>
+      </section>
 
-  <!-- SEMIS -->
-  <section class="round">
-    <p class="round-title">Semifinales <span class="round-count">— 2 partidos</span></p>
-    <div class="matches-grid two" id="round-semis"></div>
-  </section>
+      <!-- SEMIS -->
+      <section class="round">
+        <p class="round-title">Semifinales <span class="round-count">— 2 partidos</span></p>
+        <div class="matches-grid two" id="round-semis"></div>
+      </section>
 
-  <!-- FINAL -->
-  <section class="round">
-    <p class="round-title">Final <span class="round-count">— MetLife Stadium, 19 jul</span></p>
-    <div class="matches-grid final" id="round-final"></div>
-  </section>
+      <!-- FINAL -->
+      <section class="round">
+        <p class="round-title">Final <span class="round-count">— MetLife Stadium, 19 jul</span></p>
+        <div class="matches-grid final" id="round-final"></div>
+      </section>
 
-  <div class="champion" id="championBox">
-    <p class="eyebrow">🏆 Campeón del Mundo 2026</p>
-    <span class="flag" id="champFlag"></span>
-    <h2 id="champName"></h2>
-    <p>Levanta la copa en el MetLife Stadium, Nueva Jersey</p>
+      <div class="champion" id="championBox">
+        <p class="eyebrow">🏆 Campeón del Mundo 2026</p>
+        <span class="flag" id="champFlag"></span>
+        <h2 id="champName"></h2>
+        <p>Levanta la copa en el MetLife Stadium, Nueva Jersey</p>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <p class="round-title">Análisis del partido <span class="round-count">Polymarket</span></p>
+      <div id="matchDetailPanel">
+        <p class="sidebar-loading">Tocá "🔍 Analizar" en cualquier partido para ver el detalle acá: probabilidades, contexto del mercado, volumen operado, goles y ambos anotan.</p>
+      </div>
+    </aside>
   </div>
 
   <footer>Cuadro interactivo · datos de octavos al 05/07/2026 vía cobertura de prensa · hecho para jugar, no para timbear en serio 😉</footer>
@@ -372,6 +431,13 @@ function renderOctavos(){
       note.innerHTML = `<b style="color:var(--amber);">Contexto (Polymarket):</b> ${text}`;
       card.appendChild(note);
     }
+
+    const analyzeBtn = document.createElement('button');
+    analyzeBtn.className = 'analyze-btn';
+    analyzeBtn.textContent = '🔍 Analizar este partido';
+    analyzeBtn.addEventListener('click', () => selectMatchForAnalysis(m.a, m.b, m.fecha, m.stadium));
+    card.appendChild(analyzeBtn);
+
     wrap.appendChild(card);
   });
 }
@@ -436,6 +502,12 @@ function renderDerived(containerId, shell, winnersArr, sourceWinners, roundLabel
       card.appendChild(note);
     }
 
+    const analyzeBtn = document.createElement('button');
+    analyzeBtn.className = 'analyze-btn';
+    analyzeBtn.textContent = '🔍 Analizar este partido';
+    analyzeBtn.addEventListener('click', () => selectMatchForAnalysis(teamA, teamB, s.fecha, s.stadium));
+    card.appendChild(analyzeBtn);
+
     wrap.appendChild(card);
   });
 }
@@ -467,6 +539,12 @@ function renderFinal(){
     card.appendChild(bar);
     card.appendChild(teamRow(teamA, p, winner===teamA, winner===teamB, false, ()=>pickFinal(teamA)));
     card.appendChild(teamRow(teamB, 1-p, winner===teamB, winner===teamA, false, ()=>pickFinal(teamB)));
+
+    const analyzeBtn = document.createElement('button');
+    analyzeBtn.className = 'analyze-btn';
+    analyzeBtn.textContent = '🔍 Analizar este partido';
+    analyzeBtn.addEventListener('click', () => selectMatchForAnalysis(teamA, teamB, finalShell.fecha, finalShell.stadium));
+    card.appendChild(analyzeBtn);
   }
   wrap.appendChild(card);
 
@@ -630,7 +708,9 @@ function findMarketForMatchup(events, enA, enB){
         return {
           probA: priceA / total,
           probB: priceB / total,
-          analysis: ev.eventMetadata?.context_description || null
+          analysis: ev.eventMetadata?.context_description || null,
+          volume: ev.volume || null,
+          slug: ev.slug || null
         };
       }
     }
@@ -730,6 +810,135 @@ async function fetchLiveOdds(){
     statusEl.textContent = 'ℹ️ Polymarket respondió pero no encontró mercados para estos cruces todavía. Se mantienen las estimaciones propias.';
   }
   renderAll();
+}
+
+/* ============ MERCADOS EXTRA (goles / ambos anotan) — usados en el panel de análisis ============ */
+async function findExtraMarket(enA, enB, keywords){
+  try{
+    const url = `https://gamma-api.polymarket.com/public-search?q=${encodeURIComponent(enA + " " + enB + " " + keywords[0])}`;
+    const data = await fetchViaProxies(url);
+    const events = data.events || data.data || [];
+    const a = norm(enA), b = norm(enB);
+    return events.find(ev => {
+      const title = norm(ev.title || ev.question || ev.slug || "");
+      return title.includes(a) && title.includes(b) && ev.closed !== true &&
+             keywords.some(k => title.includes(norm(k)));
+    }) || null;
+  } catch(e){
+    return null;
+  }
+}
+
+function extractYesPrice(mkt){
+  try{
+    const outcomes = typeof mkt.outcomes === 'string' ? JSON.parse(mkt.outcomes) : mkt.outcomes;
+    const prices = typeof mkt.outcomePrices === 'string' ? JSON.parse(mkt.outcomePrices) : mkt.outcomePrices;
+    const yesIdx = outcomes.findIndex(o => norm(o) === 'yes');
+    if(yesIdx < 0) return null;
+    return parseFloat(prices[yesIdx]);
+  } catch(e){
+    return null;
+  }
+}
+
+async function fetchExtraMarketsForMatch(enA, enB){
+  const result = { overUnder: null, btts: null };
+
+  const goalsEvent = await findExtraMarket(enA, enB, ["total goals", "goals"]);
+  if(goalsEvent && goalsEvent.markets){
+    const line25 = goalsEvent.markets.find(m => (m.groupItemTitle || m.question || '').includes('2.5'));
+    const mkt = line25 || goalsEvent.markets[0];
+    if(mkt){
+      const price = extractYesPrice(mkt);
+      if(price !== null){
+        const lineMatch = (mkt.groupItemTitle || mkt.question || '').match(/(\d+\.?\d*)/);
+        result.overUnder = { line: lineMatch ? lineMatch[1] : '2.5', prob: price };
+      }
+    }
+  }
+
+  const bttsEvent = await findExtraMarket(enA, enB, ["both teams to score", "both teams"]);
+  if(bttsEvent && bttsEvent.markets && bttsEvent.markets[0]){
+    const price = extractYesPrice(bttsEvent.markets[0]);
+    if(price !== null) result.btts = price;
+  }
+
+  return result;
+}
+
+/* ============ PANEL DE ANÁLISIS A DEMANDA ============ */
+async function selectMatchForAnalysis(teamA, teamB, fecha, stadium){
+  const panel = document.getElementById('matchDetailPanel');
+  panel.innerHTML = `
+    <div class="detail-header">
+      <span class="flag">${flag(teamA)}</span>
+      <span class="detail-vs">${teamA} vs ${teamB}</span>
+      <span class="flag">${flag(teamB)}</span>
+    </div>
+    <p class="sidebar-note">${fecha} · ${stadium}</p>
+    <p class="sidebar-loading">Buscando en Polymarket…</p>
+  `;
+
+  const enA = TEAM_EN[teamA], enB = TEAM_EN[teamB];
+  if(!enA || !enB){
+    panel.querySelector('.sidebar-loading').textContent = 'No tengo el nombre en inglés de uno de estos equipos, no puedo buscarlo.';
+    return;
+  }
+
+  let events = [];
+  try{ events = await fetchWorldCupEvents(); } catch(e){ /* seguimos igual, probamos search directo */ }
+  let mainResult = findMarketForMatchup(events, enA, enB);
+  if(!mainResult) mainResult = await searchFallback(enA, enB);
+
+  let html = `
+    <div class="detail-header">
+      <span class="flag">${flag(teamA)}</span>
+      <span class="detail-vs">${teamA} vs ${teamB}</span>
+      <span class="flag">${flag(teamB)}</span>
+    </div>
+    <p class="sidebar-note">${fecha} · ${stadium}</p>
+  `;
+
+  if(mainResult){
+    html += `
+      <div class="probbar" style="margin:10px 0;"><i style="width:${mainResult.probA*100}%"></i><i class="b" style="width:${mainResult.probB*100}%"></i></div>
+      <div class="extra-stat"><span class="es-label">${teamA}</span><span class="es-val">${pct(mainResult.probA)}</span></div>
+      <div class="extra-stat"><span class="es-label">${teamB}</span><span class="es-val">${pct(mainResult.probB)}</span></div>
+    `;
+    if(mainResult.volume){
+      html += `<div class="extra-stat"><span class="es-label">Volumen operado</span><span class="es-val">$${Math.round(mainResult.volume).toLocaleString('es-AR')}</span></div>`;
+    }
+    if(mainResult.analysis){
+      let text = mainResult.analysis.trim();
+      if(text.length > 500) text = text.slice(0, 500).trim() + '…';
+      html += `<p class="detail-context"><b style="color:var(--amber);">Contexto (Polymarket):</b> ${text}</p>`;
+    }
+    if(mainResult.slug){
+      html += `<a class="detail-link" href="https://polymarket.com/event/${mainResult.slug}" target="_blank" rel="noopener">Ver este mercado en Polymarket →</a>`;
+    }
+  } else {
+    html += `<p class="sidebar-loading">Todavía no hay mercado real de Polymarket para este cruce (puede ser un cruce hipotético que armaste vos, o el mercado no está abierto todavía).</p>`;
+  }
+
+  html += `<div id="extraGoalsSlot" class="sidebar-loading" style="margin-top:12px;">Buscando más/menos goles y ambos anotan…</div>`;
+  panel.innerHTML = html;
+
+  const extra = await fetchExtraMarketsForMatch(enA, enB);
+  const slot = document.getElementById('extraGoalsSlot');
+  if(!slot) return; // el usuario ya tocó otro partido mientras tanto
+  let extraHtml = '';
+  if(extra.overUnder){
+    extraHtml += `<div class="extra-stat"><span class="es-label">Más de ${extra.overUnder.line} goles</span><span class="es-val">${pct(extra.overUnder.prob)}</span></div>`;
+  }
+  if(extra.btts !== null){
+    extraHtml += `<div class="extra-stat"><span class="es-label">Ambos anotan</span><span class="es-val">${pct(extra.btts)}</span></div>`;
+  }
+  if(extraHtml){
+    slot.outerHTML = extraHtml;
+  } else {
+    slot.textContent = 'Sin datos de goles/ambos anotan para este cruce todavía.';
+    slot.className = '';
+  }
 }
 
 document.getElementById('refreshOdds').addEventListener('click', fetchLiveOdds);
