@@ -530,29 +530,46 @@ async function fetchViaProxies(url){
 }
 
 async function fetchWorldCupEvents(){
-  const url = "https://gamma-api.polymarket.com/events?tag_id=102232&closed=false&limit=500";
+  const url = "https://gamma-api.polymarket.com/events?tag_id=102232&closed=false&limit=500&order=volume24hr&ascending=false";
   const data = await fetchViaProxies(url);
-  return Array.isArray(data) ? data : (data.events || data.data || []);
+  const events = Array.isArray(data) ? data : (data.events || data.data || []);
+  console.log(`[Mundial2026] eventos recibidos: ${events.length}`);
+  console.log('[Mundial2026] primeros 30 títulos:', events.slice(0,30).map(e => e.title || e.question || e.slug));
+  return events;
 }
 
 function findMarketForMatchup(events, enA, enB){
   const a = norm(enA), b = norm(enB);
-  for(const ev of events){
+  // preferimos eventos activos (closed:false) y con fecha más reciente, para no
+  // confundirnos con partidos viejos entre los mismos rivales (ej. UEFA Nations League 2025)
+  const candidates = events.filter(ev => {
     const title = norm(ev.title || ev.question || ev.slug || "");
-    if(title.includes(a) && title.includes(b)){
-      const markets = ev.markets || [];
-      for(const mkt of markets){
-        let outcomes, prices;
-        try{
-          outcomes = typeof mkt.outcomes === 'string' ? JSON.parse(mkt.outcomes) : mkt.outcomes;
-          prices = typeof mkt.outcomePrices === 'string' ? JSON.parse(mkt.outcomePrices) : mkt.outcomePrices;
-        } catch(e){ continue; }
-        if(!outcomes || !prices || outcomes.length < 2) continue;
-        const idxA = outcomes.findIndex(o => norm(o).includes(a));
-        const idxB = outcomes.findIndex(o => norm(o).includes(b));
-        if(idxA >= 0 && idxB >= 0){
-          return { probA: parseFloat(prices[idxA]), probB: parseFloat(prices[idxB]) };
-        }
+    return title.includes(a) && title.includes(b) && ev.closed !== true;
+  }).sort((e1, e2) => new Date(e2.creationDate || 0) - new Date(e1.creationDate || 0));
+
+  for(const ev of candidates){
+    const markets = ev.markets || [];
+    let priceA = null, priceB = null;
+    for(const mkt of markets){
+      let outcomes, prices;
+      try{
+        outcomes = typeof mkt.outcomes === 'string' ? JSON.parse(mkt.outcomes) : mkt.outcomes;
+        prices = typeof mkt.outcomePrices === 'string' ? JSON.parse(mkt.outcomePrices) : mkt.outcomePrices;
+      } catch(e){ continue; }
+      if(!outcomes || !prices) continue;
+      const yesIdx = outcomes.findIndex(o => norm(o) === 'yes');
+      if(yesIdx < 0) continue;
+      const yesPrice = parseFloat(prices[yesIdx]);
+      const label = norm(mkt.groupItemTitle || mkt.question || "");
+      if(label.includes('draw')) continue; // no nos interesa el mercado de empate
+      if(priceA === null && label.includes(a)) priceA = yesPrice;
+      else if(priceB === null && label.includes(b)) priceB = yesPrice;
+    }
+    if(priceA !== null && priceB !== null){
+      const total = priceA + priceB;
+      if(total > 0){
+        // normalizamos repartiendo la probabilidad de empate proporcionalmente
+        return { probA: priceA / total, probB: priceB / total };
       }
     }
   }
@@ -564,8 +581,10 @@ async function searchFallback(enA, enB){
     const url = `https://gamma-api.polymarket.com/public-search?q=${encodeURIComponent(enA + " " + enB)}`;
     const data = await fetchViaProxies(url);
     const events = data.events || data.data || [];
+    console.log(`[Mundial2026] búsqueda "${enA} ${enB}" → ${events.length} eventos:`, events.slice(0,5).map(e => e.title || e.question || e.slug));
     return findMarketForMatchup(events, enA, enB);
   } catch(e){
+    console.log(`[Mundial2026] búsqueda "${enA} ${enB}" falló:`, e);
     return null;
   }
 }
