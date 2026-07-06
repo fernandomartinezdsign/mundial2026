@@ -173,7 +173,7 @@ footer{
   </header>
 
   <div class="disclaimer">
-    <b>Cómo funciona:</b> al abrir el archivo, intenta traer en vivo las probabilidades reales de Polymarket. Como el dominio de Polymarket puede estar bloqueado por tu ISP (bloqueo típico de casas de apuestas en Argentina), primero prueba directo y si falla usa un <b>proxy puente público</b> (otro dominio que hace el pedido por vos). Si todo eso falla, o Polymarket no tiene mercado abierto para algún cruce, ese partido queda con una <b>estimación propia</b> (marcada en cada tarjeta). Cuartos, semis y final todavía no tienen mercado real porque los rivales no están confirmados: esos usan un modelo simple derivado de las probabilidades de octavos. Los dos resultados ya jugados (Francia y Marruecos) son reales al 5 de julio.
+    <b>Cómo funciona:</b> al abrir el archivo, intenta traer en vivo las probabilidades reales de Polymarket. Primero prueba directo; si tu red bloquea Polymarket, usa un <b>puente propio</b> (un Cloudflare Worker) y, si ese también falla, otros proxies públicos como último respaldo. Si todo eso falla, o Polymarket no tiene mercado abierto para algún cruce, ese partido queda con una <b>estimación propia</b> (marcada en cada tarjeta). Cuartos, semis y final todavía no tienen mercado real porque los rivales no están confirmados: esos usan un modelo simple derivado de las probabilidades de octavos. Los dos resultados ya jugados (Francia y Marruecos) son reales al 5 de julio.
   </div>
 
   <div class="controls">
@@ -507,7 +507,8 @@ function norm(s){
 // de casas de apuestas en Argentina). Probamos: 1) directo, 2) por un proxy público
 // (otro dominio, no bloqueado, que hace el pedido por nosotros y devuelve el JSON).
 const PROXIES = [
-  (url) => url, // directo, sin proxy
+  (url) => url, // directo, sin proxy (funciona si tu red no bloquea polymarket.com)
+  (url) => `https://throbbing-rice-5051.fernandomartinez-dsign.workers.dev/?url=${encodeURIComponent(url)}`, // puente propio (Cloudflare Worker)
   (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
   (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
