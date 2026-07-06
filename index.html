@@ -228,10 +228,10 @@ const flags = {
 };
 
 const octavosData = [
-  {a:"Francia", b:"Paraguay", pa:1.0, stadium:"Gillette Stadium, Boston", fecha:"4 jul", played:true, score:"1–0"},
-  {a:"Marruecos", b:"Canadá", pa:1.0, stadium:"— (jugado en 16avos previos)", fecha:"4 jul", played:true, score:"3–0"},
-  {a:"Brasil", b:"Noruega", pa:0.68, stadium:"MetLife Stadium, Nueva Jersey", fecha:"5 jul", en:["Brazil","Norway"]},
-  {a:"México", b:"Inglaterra", pa:0.32, stadium:"Estadio Azteca, CDMX", fecha:"5 jul", en:["Mexico","England"]},
+  {a:"Francia", b:"Paraguay", pa:1.0, stadium:"Gillette Stadium, Boston", fecha:"4 jul", played:true, score:"1–0", winner:"Francia"},
+  {a:"Marruecos", b:"Canadá", pa:1.0, stadium:"— (jugado en 16avos previos)", fecha:"4 jul", played:true, score:"3–0", winner:"Marruecos"},
+  {a:"Brasil", b:"Noruega", pa:0.0, stadium:"MetLife Stadium, Nueva Jersey", fecha:"5 jul", en:["Brazil","Norway"], played:true, score:"1–2", winner:"Noruega"},
+  {a:"México", b:"Inglaterra", pa:0.0, stadium:"Estadio Azteca, CDMX", fecha:"5 jul", en:["Mexico","England"], played:true, score:"2–3", winner:"Inglaterra"},
   {a:"Portugal", b:"España", pa:0.42, stadium:"AT&T Stadium, Dallas", fecha:"6 jul", en:["Portugal","Spain"]},
   {a:"Estados Unidos", b:"Bélgica", pa:0.38, stadium:"Lumen Field, Seattle", fecha:"6 jul", en:["United States","Belgium"]},
   {a:"Argentina", b:"Egipto", pa:0.82, stadium:"Mercedes-Benz Stadium, Atlanta", fecha:"7 jul", en:["Argentina","Egypt"]},
@@ -256,7 +256,7 @@ const finalShell = {stadium:"MetLife Stadium, Nueva Jersey", fecha:"19 jul"};
 /* ============ STATE ============ */
 // winners[round] = array of team names (or null if undecided), aligned with shells
 let state = {
-  octavos: octavosData.map(m => m.played ? m.a : null), // winners of octavos
+  octavos: octavosData.map(m => m.played ? m.winner : null), // winners of octavos
   cuartos: [null,null,null,null],
   semis: [null,null],
   final: null
@@ -505,7 +505,7 @@ function simulateAll(){
 
 function resetAll(){
   state.octavos = octavosData.map(m => {
-    if(m.played) return m.a;
+    if(m.played) return m.winner;
     if(m.autoResolved) return m.pa >= 0.97 ? m.a : m.b;
     return null;
   });
